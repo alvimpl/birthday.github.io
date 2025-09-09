@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de IDs - Caça ao Tesouro</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .test-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .test-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .test-card h3 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .test-card p {
+            margin: 0 0 15px 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .info h4 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+        .info p {
+            margin: 0;
+            color: #424242;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Teste de IDs - Caça ao Tesouro Virtual</h1>
+        
+        <div class="info">
+            <h4>🔍 Como Testar</h4>
+            <p>Cada link abaixo abre o jogo com um ID diferente. Observe como os ícones são embaralhados de forma determinística para cada convidado, mas sempre mantendo a mesma disposição para o mesmo ID.</p>
+        </div>
+        
+        <div class="test-links">
+            <div class="test-card">
+                <h3>👤 João</h3>
+                <p>ID: joao</p>
+                <a href="index.html?id=joao" class="btn" target="_blank">Abrir Jogo</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>👤 Maria</h3>
+                <p>ID: maria</p>
+                <a href="index.html?id=maria" class="btn" target="_blank">Abrir Jogo</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>👤 Pedro</h3>
+                <p>ID: pedro</p>
+                <a href="index.html?id=pedro" class="btn" target="_blank">Abrir Jogo</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>👤 Ana</h3>
+                <p>ID: ana</p>
+                <a href="index.html?id=ana" class="btn" target="_blank">Abrir Jogo</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>🎲 Padrão</h3>
+                <p>ID: default</p>
+                <a href="index.html" class="btn" target="_blank">Abrir Jogo</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>🎯 Teste123</h3>
+                <p>ID: teste123</p>
+                <a href="index.html?id=teste123" class="btn" target="_blank">Abrir Jogo</a>
+            </div>
+        </div>
+        
+        <div class="info">
+            <h4>⚙️ Implementação Técnica</h4>
+            <p><strong>Algoritmo:</strong> Hash djb2 → Seed → Mulberry32 RNG → Shuffle determinístico<br>
+            <strong>Resultado:</strong> Cada ID sempre produz a mesma disposição de ícones, mas IDs diferentes produzem disposições diferentes.</p>
+        </div>
+        
+        <div class="info">
+            <h4>🎯 Dica para Testar</h4>
+            <p>Abra o mesmo ID várias vezes - você verá que os ícones sempre ficam na mesma posição. Depois teste IDs diferentes para ver como a disposição muda deterministicamente.</p>
+        </div>
+    </div>
+</body>
+</html>

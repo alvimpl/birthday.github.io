@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop — Guest Access</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 50%, #1a1a2e 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        .desktop {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .taskbar {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .taskbar-title {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .taskbar-clock {
+            color: #cccccc;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .desktop-content {
+            flex: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 120px;
+            justify-content: center;
+            position: relative;
+            outline: none;
+        }
+
+        .desktop-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .desktop-icon:focus {
+            outline: 2px solid #4a9eff;
+            outline-offset: 2px;
+        }
+
+        .desktop-icon.correct {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(74, 158, 255, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(74, 158, 255, 0); }
+        }
+
+        .icon-svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 8px;
+            fill: #ffffff;
+        }
+
+        .icon-label {
+            color: #ffffff;
+            font-size: 12px;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            color: #ffffff;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h2 {
+            margin-bottom: 16px;
+            color: #4a9eff;
+        }
+
+        .modal p {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4a9eff, #0066cc);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 158, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .game-stats {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+
+
+
+
+        .drag-drop-area {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 40px;
+            margin: 20px 0;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .drag-drop-area.drag-over {
+            border-color: #4a9eff;
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .draggable-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: grab;
+            display: inline-block;
+            margin: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .draggable-item:active {
+            cursor: grabbing;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #4a9eff;
+            animation: confetti-fall 3s linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .terminal {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .desktop-content {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .desktop-icon {
+                min-height: 100px;
+                padding: 12px;
+            }
+            
+            .icon-svg {
+                width: 36px;
+                height: 36px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .desktop-content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .sound-toggle {
+            position: fixed;
+            top: 60px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        noscript {
+            display: block;
+            text-align: center;
+            padding: 50px;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            margin: 20px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <noscript>
+        <h2>Convite de Aniversário</h2>
+        <p>Data: 29/10/2024</p>
+        <p>Horário: 19:30</p>
+        <p>Local: [A ser definido]</p>
+        <p>Por favor, confirme sua presença via WhatsApp</p>
+    </noscript>
+
+    <div class="desktop">
+        <div class="taskbar">
+            <div class="taskbar-title">🔍 Há algo a ser resolvido aqui...</div>
+            <div class="taskbar-clock" id="clock">00:00:00</div>
+        </div>
+
+        <button class="sound-toggle" id="soundToggle" title="Toggle Sound">
+            🔊
+        </button>
+
+        <div class="game-stats" id="gameStats">
+            Tentativas: <span id="attempts">0</span>
+        </div>
+
+        <div class="desktop-content" id="desktopGrid">
+            <!-- Ícones serão gerados dinamicamente -->
+        </div>
+
+
+        
+
+    </div>
+
+    <!-- Modal para revelações -->
+    <div class="modal" id="modal">
+        <div class="modal-content" id="modalContent">
+            <!-- Conteúdo dinâmico -->
+        </div>
+    </div>
+
+    <script>
+        // Configurações do jogo
+        const GAME_CONFIG = {
+            totalIcons: 16,
+            hintDelay: 30000, // 30 segundos
+            sounds: {
+                click: () => playTone(800, 100),
+                error: () => playTone(400, 200),
+                success: () => playTone(1000, 300)
+            }
+        };
+
+        // Estado do jogo
+        let gameState = {
+            attempts: 0,
+            hintsUsed: 0,
+            soundEnabled: true,
+            correctIconIndex: 0,
+            guestId: '',
+            solved: false,
+            startTime: Date.now()
+        };
+
+        // RNG Seeded (Mulberry32) - Implementação melhorada
+        function mulberry32(seed) {
+            return function() {
+                let t = seed += 0x6D2B79F5;
+                t = Math.imul(t ^ t >>> 15, t | 1);
+                t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            }
+        }
+
+        // Hash function (djb2) para gerar seed consistente
+        function hash(str) {
+            let hash = 5381;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) + hash) + str.charCodeAt(i);
+            }
+            return hash >>> 0; // Convert to unsigned 32-bit integer
+        }
+
+        // Função de shuffle determinística usando RNG
+        function shuffle(array, rng) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(rng() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Ícones disponíveis - Seguindo estrutura do pseudocódigo
+        const icons = [
+            {key:'confidencial', label:'Confidencial', type:'folder', svg: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><circle cx="12" cy="7" r="4"/>'},
+            {key:'projetos', label:'Projetos', type:'folder', svg: '<path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>'},
+            {key:'logs', label:'Logs', type:'file', svg: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/>'},
+            {key:'fotos_2009', label:'Fotos_2009', type:'folder', svg: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>'},
+            {key:'drivers', label:'Drivers', type:'folder', svg: '<circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16 10,8"/>'},
+            {key:'readme', label:'Readme', type:'file', svg: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'},
+            {key:'temp', label:'Temp', type:'folder', svg: '<polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>'},
+            {key:'backup', label:'Backup', type:'folder', svg: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/>'},
+            {key:'config', label:'Config', type:'file', svg: '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m15.5-3.5L19 4m-7 7l-3.5 3.5M6.5 6.5L4 4m7 7l3.5 3.5M17.5 17.5L20 20"/>'},
+            {key:'downloads', label:'Downloads', type:'folder', svg: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/>'},
+            {key:'documentos', label:'Documentos', type:'folder', svg: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/>'},
+            {key:'sistema', label:'Sistema', type:'folder', svg: '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'},
+            {key:'rede', label:'Rede', type:'folder', svg: '<circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49m11.31-2.82a10 10 0 010 14.14m-14.14 0a10 10 0 010-14.14"/>'},
+            {key:'lixeira', label:'Lixeira', type:'folder', svg: '<polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>'},
+            {key:'musica', label:'Música', type:'folder', svg: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'},
+            {key:'videos', label:'Vídeos', type:'folder', svg: '<polygon points="23,7 16,12 23,17 23,7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>'}
+        ];
+
+        // Inicialização seguindo o pseudocódigo
+        function init() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // DESENVOLVIMENTO: Limpar localStorage para testes
+            // localStorage.removeItem('solved'); // Descomente para resetar
+            
+            // Verificar se já foi resolvido primeiro
+            if (localStorage.getItem('solved') === '1') {
+                showRevealFinal();
+                return;
+            }
+            
+            // seed a partir de ?id= ou fallback
+            const id = new URLSearchParams(location.search).get('id') || 'default';
+            const seed = hash(id);           // djb2 hash
+            const rng = mulberry32(seed);    // RNG determinístico
+            
+            // embaralhar com RNG
+            const shuffledIcons = shuffle(icons, rng);
+            
+            // escolher correto com RNG
+            const correctIndex = Math.floor(rng() * shuffledIcons.length);
+            shuffledIcons[correctIndex].isCorrect = true;
+            gameState.correctIconIndex = correctIndex;
+            
+            // render grid
+            render(shuffledIcons.slice(0, GAME_CONFIG.totalIcons));
+            
+            setupEventListeners();
+            
+
+        }
+
+        // render grid
+        function render(iconsToRender) {
+            const grid = document.getElementById('desktopGrid');
+            grid.innerHTML = '';
+            
+            iconsToRender.forEach((icon, index) => {
+                const iconElement = createIconElement(icon, index);
+                grid.appendChild(iconElement);
+            });
+        }
+
+        function createIconElement(icon, index) {
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'desktop-icon';
+            iconDiv.tabIndex = 0;
+            iconDiv.setAttribute('aria-label', icon.label);
+            iconDiv.setAttribute('data-index', index);
+            
+            iconDiv.innerHTML = `
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${icon.svg}
+                </svg>
+                <div class="icon-label">${icon.label}</div>
+            `;
+            
+            // eventos - seguindo pseudocódigo
+            iconDiv.addEventListener('click', () => onClickIcon(icon));
+            iconDiv.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClickIcon(icon);
+                }
+            });
+            
+            return iconDiv;
+        }
+
+        // eventos - seguindo pseudocódigo
+        function onClickIcon(icon) {
+            gameState.attempts++;
+            updateStats();
+            
+            if (icon.isCorrect) {
+                playSound('success');
+                showReveal1();
+            } else {
+                playSound('error');
+                showHintToast(); // feedback curto
+            }
+        }
+        
+        function showHintToast() {
+            const messages = [
+                "Hmm, não é aqui... 🤔",
+                "Tente novamente! 🔍",
+                "Quase lá... 😅",
+                "Não desista! 💪",
+                "Procure melhor! 👀"
+            ];
+            
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            showModal('Ops!', randomMessage, [{
+                text: 'Continuar procurando',
+                action: () => closeModal()
+            }]);
+        }
+
+        // Seguindo pseudocódigo
+        function showReveal1(){
+            const modalContent = `
+                <h2>🎉 Primeira pista encontrada!</h2>
+                <p>Achou a primeira pista! Data: 29/10</p>
+                <div style="margin-top: 20px;">
+                    <button class="btn" onclick="showMiniPuzzle()">Continuar</button>
+                </div>
+            `;
+            
+            document.getElementById('modalContent').innerHTML = modalContent;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function showMiniPuzzle(){
+            // opção A: drag & drop
+            const puzzleContent = `
+                <h2>🔐 Mini Desafio</h2>
+                <p>Arraste o arquivo <strong>convite.key</strong> para a pasta <strong>Confidencial</strong></p>
+                
+                <div class="draggable-item" draggable="true" id="inviteKey">
+                    📄 convite.key
+                </div>
+                
+                <div class="drag-drop-area" id="dropZone">
+                    📁 Pasta Confidencial<br>
+                    <small>Solte o arquivo aqui</small>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="showGeekQuestion()">Ou responda uma pergunta geek</button>
+                </div>
+            `;
+            
+            document.getElementById('modalContent').innerHTML = puzzleContent;
+            document.getElementById('modal').style.display = 'flex';
+            
+            setupDragAndDrop();
+        }
+
+        function setupDragAndDrop() {
+            const draggable = document.getElementById('inviteKey');
+            const dropZone = document.getElementById('dropZone');
+            
+            draggable.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', 'convite.key');
+            });
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('drag-over');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                
+                const data = e.dataTransfer.getData('text/plain');
+                // quando drop = alvo correto => showRevealFinal()
+                if (data === 'convite.key') {
+                    playSound('success');
+                    showRevealFinal();
+                }
+            });
+        }
+
+        function showGeekQuestion() {
+            // Lista de 50 perguntas geek aleatórias
+            const geekQuestions = [
+                // Tecnologia e Programação
+                { q: "Qual comando lista arquivos no terminal?", a: ["ls", "cd", "pwd"], correct: 0 },
+                { q: "Qual linguagem é conhecida como 'a linguagem da web'?", a: ["JavaScript", "Python", "Java"], correct: 0 },
+                { q: "O que significa HTML?", a: ["HyperText Markup Language", "Home Tool Markup Language", "Hyperlink Text Management Language"], correct: 0 },
+                { q: "Qual empresa criou o sistema operacional Android?", a: ["Google", "Apple", "Microsoft"], correct: 0 },
+                { q: "Em que ano foi lançado o primeiro iPhone?", a: ["2007", "2005", "2009"], correct: 0 },
+                { q: "Qual é a extensão de arquivo para JavaScript?", a: [".js", ".java", ".jsx"], correct: 0 },
+                { q: "O que significa CPU?", a: ["Central Processing Unit", "Computer Personal Unit", "Central Program Unit"], correct: 0 },
+                { q: "Qual protocolo é usado para navegar na web?", a: ["HTTP", "FTP", "SMTP"], correct: 0 },
+                { q: "Quem criou o Linux?", a: ["Linus Torvalds", "Bill Gates", "Steve Jobs"], correct: 0 },
+                { q: "Qual é o nome do mascote do Linux?", a: ["Tux", "Penguin", "Linux"], correct: 0 },
+                { q: "O que significa RAM?", a: ["Random Access Memory", "Read Access Memory", "Rapid Access Memory"], correct: 0 },
+                { q: "Qual empresa desenvolveu o navegador Chrome?", a: ["Google", "Mozilla", "Microsoft"], correct: 0 },
+                { q: "Em Python, qual função exibe texto na tela?", a: ["print()", "show()", "display()"], correct: 0 },
+                { q: "Qual é a porta padrão do HTTP?", a: ["80", "443", "21"], correct: 0 },
+                { q: "O que significa URL?", a: ["Uniform Resource Locator", "Universal Resource Link", "Unique Resource Location"], correct: 0 },
+                
+                // Star Wars
+                { q: "Qual é o nome do pai de Luke Skywalker?", a: ["Darth Vader", "Obi-Wan", "Han Solo"], correct: 0 },
+                { q: "Em que planeta Luke Skywalker cresceu?", a: ["Tatooine", "Naboo", "Coruscant"], correct: 0 },
+                { q: "Qual é a arma tradicional dos Jedi?", a: ["Sabre de luz", "Blaster", "Espada"], correct: 0 },
+                { q: "Quem é o mestre Jedi de Luke?", a: ["Yoda", "Mace Windu", "Qui-Gon"], correct: 0 },
+                { q: "Qual é o nome da nave de Han Solo?", a: ["Millennium Falcon", "X-Wing", "TIE Fighter"], correct: 0 },
+                { q: "Quantos episódios tem a saga principal de Star Wars?", a: ["9", "6", "12"], correct: 0 },
+                { q: "Qual é o nome da princesa rebelde?", a: ["Leia", "Padmé", "Rey"], correct: 0 },
+                { q: "Quem disse 'Que a Força esteja com você'?", a: ["Obi-Wan Kenobi", "Darth Vader", "C-3PO"], correct: 0 },
+                
+                // Senhor dos Anéis
+                { q: "Qual é o nome do hobbit protagonista?", a: ["Frodo", "Bilbo", "Sam"], correct: 0 },
+                { q: "Quantos anéis de poder foram criados?", a: ["20", "9", "3"], correct: 0 },
+                { q: "Qual é o nome do mago cinzento?", a: ["Gandalf", "Saruman", "Radagast"], correct: 0 },
+                { q: "Em que montanha o Um Anel foi forjado?", a: ["Monte da Perdição", "Monte Erebor", "Monte Caradhras"], correct: 0 },
+                { q: "Qual é o nome da terra dos elfos?", a: ["Valfenda", "Rohan", "Gondor"], correct: 0 },
+                { q: "Quem é o rei de Gondor no final?", a: ["Aragorn", "Boromir", "Denethor"], correct: 0 },
+                
+                // Matrix
+                { q: "Qual pílula Neo escolhe?", a: ["Vermelha", "Azul", "Verde"], correct: 0 },
+                { q: "Qual é o nome real de Neo?", a: ["Thomas Anderson", "John Smith", "David Jones"], correct: 0 },
+                { q: "Quem oferece as pílulas para Neo?", a: ["Morpheus", "Trinity", "Agent Smith"], correct: 0 },
+                { q: "Qual é o nome da nave de Morpheus?", a: ["Nabucodonosor", "Osiris", "Logos"], correct: 0 },
+                { q: "Em que ano se passa a realidade de Matrix?", a: ["2199", "2099", "2299"], correct: 0 },
+                
+                // The Big Bang Theory
+                { q: "Qual é a profissão de Sheldon Cooper?", a: ["Físico teórico", "Engenheiro", "Astrofísico"], correct: 0 },
+                { q: "Qual é o QI de Sheldon?", a: ["187", "200", "175"], correct: 0 },
+                { q: "Onde Leonard e Sheldon trabalham?", a: ["Caltech", "MIT", "Harvard"], correct: 0 },
+                { q: "Qual é o jogo favorito de Sheldon?", a: ["Rock, Paper, Scissors, Lizard, Spock", "Xadrez", "Dungeons & Dragons"], correct: 0 },
+                { q: "Qual é a frase característica de Sheldon?", a: ["Bazinga!", "Cowabunga!", "Eureka!"], correct: 0 },
+                
+                // Star Trek
+                { q: "Qual é o nome da nave Enterprise?", a: ["NCC-1701", "NCC-1702", "NCC-1700"], correct: 0 },
+                { q: "Quem é o capitão da Enterprise original?", a: ["James T. Kirk", "Jean-Luc Picard", "Benjamin Sisko"], correct: 0 },
+                { q: "Qual é a saudação vulcana?", a: ["Vida longa e próspera", "Que a paz esteja contigo", "Até a vista"], correct: 0 },
+                { q: "Qual é o nome do vulcano da Enterprise?", a: ["Spock", "Sarek", "T'Pol"], correct: 0 },
+                { q: "O que significa 'Warp'?", a: ["Velocidade superluminal", "Teletransporte", "Escudo protetor"], correct: 0 },
+                
+                // Simpsons
+                { q: "Qual é o nome completo de Homer Simpson?", a: ["Homer Jay Simpson", "Homer John Simpson", "Homer James Simpson"], correct: 0 },
+                { q: "Em que cidade vivem os Simpsons?", a: ["Springfield", "Shelbyville", "Capital City"], correct: 0 },
+                { q: "Qual é a bebida favorita de Homer?", a: ["Cerveja Duff", "Coca-Cola", "Café"], correct: 0 },
+                { q: "Quantos dedos têm os personagens dos Simpsons?", a: ["4", "5", "3"], correct: 0 },
+                { q: "Qual é o nome do chefe de Homer?", a: ["Sr. Burns", "Ned Flanders", "Apu"], correct: 0 },
+                { q: "Qual instrumento Lisa toca?", a: ["Saxofone", "Piano", "Violino"], correct: 0 },
+                { q: "Qual é a frase característica de Homer?", a: ["D'oh!", "Excelente!", "Ay, caramba!"], correct: 0 },
+                { q: "Qual é o nome do cachorro dos Simpsons?", a: ["Santa's Little Helper", "Snowball", "Blinky"], correct: 0 }
+            ];
+            
+            // Selecionar pergunta aleatória
+            const randomIndex = Math.floor(Math.random() * geekQuestions.length);
+            const question = geekQuestions[randomIndex];
+            
+            const questionContent = `
+                <h2>🤓 Pergunta Geek</h2>
+                <p>${question.q}</p>
+                
+                <div style="margin: 20px 0;">
+                    ${question.a.map((answer, index) => 
+                        `<button class="btn" onclick="checkGeekAnswer(${index === question.correct})">${answer}</button>`
+                    ).join('')}
+                </div>
+                
+                <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px;">
+                    <button class="btn btn-secondary" onclick="showGeekQuestion()">🔄 Trocar pergunta</button>
+                </div>
+            `;
+            
+            document.getElementById('modalContent').innerHTML = questionContent;
+        }
+
+        function checkGeekAnswer(isCorrect) {
+            if (isCorrect) {
+                playSound('success');
+                showRevealFinal();
+            } else {
+                playSound('error');
+                showGameOver();
+            }
+        }
+        
+        function showGameOver() {
+             const gameOverContent = `
+                 <div style="text-align: center; padding: 40px;">
+                     <h1 style="color: #ff4444; font-size: 48px; margin: 40px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">YOU SHALL NOT PASS!</h1>
+                     <p style="font-size: 18px; opacity: 0.8; margin-top: 30px;">Gandalf bloqueou seu acesso ao convite.</p>
+                 </div>
+             `;
+             
+             document.getElementById('modalContent').innerHTML = gameOverContent;
+             document.getElementById('modal').style.display = 'flex';
+             
+             // Remover possibilidade de fechar o modal
+             document.getElementById('modal').onclick = null;
+             document.removeEventListener('keydown', closeModalOnEscape);
+         }
+
+        function showRevealFinal(){
+            localStorage.setItem('solved', '1');
+            
+            const finalContent = `
+                <h2>🎉 Convite desbloqueado!</h2>
+                <div style="text-align: left; margin: 20px 0; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                    <p><strong>📅 Data:</strong> 29/10</p>
+                    <p><strong>🕰️ Horário:</strong> 19:30</p>
+                    <p><strong>📍 Local:</strong> Meu Apê</p>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <a href="https://wa.me/?text=Confirmo%20presença%20no%20aniversário%20dia%2029/10%20às%2019:30!" 
+                       class="btn" target="_blank">📱 RSVP WhatsApp</a>
+                    <button class="btn" onclick="downloadICS()">📅 Adicionar ao calendário</button>
+                    <button class="btn btn-secondary" onclick="copyDetails()">📋 Copiar</button>
+                </div>
+                
+                <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">
+                    Tentativas: ${gameState.attempts} | Tempo: ${formatTime(Date.now() - gameState.startTime)}
+                </p>
+            `;
+            
+            document.getElementById('modalContent').innerHTML = finalContent;
+            document.getElementById('modal').style.display = 'flex';
+            
+            // Confete!
+            createConfetti();
+        }
+
+        function downloadICS() {
+            const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Birthday Hunt//Birthday Event//EN
+BEGIN:VEVENT
+UID:birthday-${Date.now()}@treasurehunt.com
+DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+DTSTART:20241029T193000Z
+SUMMARY:Aniversário - Caça ao Tesouro
+DESCRIPTION:Convite especial revelado através da caça ao tesouro!
+LOCATION:[Local será informado]
+END:VEVENT
+END:VCALENDAR`;
+            
+            const blob = new Blob([icsContent], { type: 'text/calendar' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'aniversario.ics';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyDetails() {
+            const details = `🎉 Convite de Aniversário\n\n📅 Data: 29 de Outubro de 2024\n🕰️ Horário: 19:30\n📍 Local: [Local será informado]\n\nConfirme sua presença!`;
+            
+            navigator.clipboard.writeText(details).then(() => {
+                showModal('✅ Copiado!', 'Detalhes copiados para a área de transferência!', [{
+                    text: 'OK',
+                    action: () => closeModal()
+                }]);
+            });
+        }
+
+        function showModal(title, content, buttons = []) {
+            const modalContent = `
+                <h2>${title}</h2>
+                <p>${content}</p>
+                <div style="margin-top: 20px;">
+                    ${buttons.map(btn => `<button class="btn" onclick="${btn.action.toString().match(/\{([\s\S]*)\}/)[1]}">${btn.text}</button>`).join('')}
+                </div>
+            `;
+            
+            document.getElementById('modalContent').innerHTML = modalContent;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function setupEventListeners() {
+            // Fechar modal com ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+            
+            // Modal click outside
+            document.getElementById('modal').addEventListener('click', (e) => {
+                if (e.target.id === 'modal') {
+                    closeModal();
+                }
+            });
+            
+            // Sound toggle
+            document.getElementById('soundToggle').addEventListener('click', () => {
+                gameState.soundEnabled = !gameState.soundEnabled;
+                document.getElementById('soundToggle').textContent = gameState.soundEnabled ? '🔊' : '🔇';
+            });
+            
+
+            
+            // Easter eggs
+            let clickCount = 0;
+            document.body.addEventListener('click', (e) => {
+                if (e.target === document.body) {
+                    clickCount++;
+                    if (clickCount >= 5) {
+                        createConfetti();
+                        clickCount = 0;
+                    }
+                }
+            });
+            
+            // Terminal easter egg
+            let keySequence = '';
+            document.addEventListener('keydown', (e) => {
+                keySequence += e.key;
+                if (keySequence.includes('help')) {
+                    showTerminal();
+                    keySequence = '';
+                }
+                if (keySequence.length > 10) {
+                    keySequence = keySequence.slice(-10);
+                }
+            });
+        }
+
+
+
+        function showTerminal() {
+            const terminalContent = `
+                <div class="terminal">
+                    <div>$ man convite</div>
+                    <div>CONVITE(1)                                    Manual do Usuário                                    CONVITE(1)</div>
+                    <div></div>
+                    <div>NOME</div>
+                    <div>     convite - sistema de caça ao tesouro para revelação de convites</div>
+                    <div></div>
+                    <div>DESCRIÇÃO</div>
+                    <div>     Este sistema permite encontrar convites através de uma interface desktop.</div>
+                    <div>     Clique nos ícones para encontrar o convite secreto!</div>
+                    <div></div>
+                    <div>DICAS</div>
+                    <div>     - Procure por algo relacionado à segurança</div>
+                    <div>     - Use as dicas se precisar de ajuda</div>
+                    <div>     - Digite 'help' para ver este manual</div>
+                </div>
+                
+                <button class="btn" onclick="closeModal()">Fechar Terminal</button>
+            `;
+            
+            showModal('🖥️ Terminal', terminalContent, []);
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = ['#4a9eff', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'][Math.floor(Math.random() * 5)];
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 50);
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('pt-BR', { hour12: false });
+            document.getElementById('clock').textContent = timeString;
+        }
+
+        function updateStats() {
+            document.getElementById('attempts').textContent = gameState.attempts;
+        }
+
+        // Função hashCode removida - usando hash() do pseudocódigo
+
+        function formatTime(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function playSound(type) {
+            if (!gameState.soundEnabled) return;
+            
+            if (GAME_CONFIG.sounds[type]) {
+                GAME_CONFIG.sounds[type]();
+            }
+        }
+
+        function playTone(frequency, duration) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+            } catch (e) {
+                // Fallback silencioso se áudio não estiver disponível
+            }
+        }
+
+
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
